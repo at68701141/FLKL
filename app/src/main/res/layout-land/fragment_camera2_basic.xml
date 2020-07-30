@@ -45,11 +45,11 @@
         android:orientation="horizontal">
 
         <Button
-            android:id="@+id/picture"
+            android:id="@+id/rotate"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
-            android:text="@string/picture" />
+            android:text="@string/rotate" />
 
         <ImageButton
             android:id="@+id/info"

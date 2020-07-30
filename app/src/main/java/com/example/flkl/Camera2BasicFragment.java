@@ -94,9 +94,7 @@ import org.opencv.android.Utils;
 import org.opencv.android.BaseLoaderCallback;
 import org.opencv.android.LoaderCallbackInterface;
 import org.opencv.android.OpenCVLoader;
-import org.opencv.core.CvType;
 import org.opencv.core.Mat;
-import org.opencv.imgproc.Imgproc;
 
 public class Camera2BasicFragment extends Fragment
         implements View.OnClickListener, ActivityCompat.OnRequestPermissionsResultCallback {
@@ -268,7 +266,7 @@ public class Camera2BasicFragment extends Fragment
         @Override
         @RequiresPermission(android.Manifest.permission.CAMERA)
         public void onSurfaceTextureAvailable(SurfaceTexture texture, int width, int height) {
-            openCamera(width, height);
+            openCamera(width, height, isFacing);
         }
 
         @Override
@@ -346,6 +344,8 @@ public class Camera2BasicFragment extends Fragment
     private AutoFitTextureView mTextureView;
 
     private SurfaceView mSurfaceView;
+
+    private boolean isFacing = true;
 
     /**
      * A {@link CameraCaptureSession } for camera preview.
@@ -609,7 +609,7 @@ public class Camera2BasicFragment extends Fragment
 
     @Override
     public void onViewCreated(final View view, Bundle savedInstanceState) {
-        view.findViewById(R.id.picture).setOnClickListener(this);
+        view.findViewById(R.id.rotate).setOnClickListener(this);
         view.findViewById(R.id.info).setOnClickListener(this);
         mTextureView = (AutoFitTextureView) view.findViewById(R.id.texture);
 
@@ -678,7 +678,7 @@ public class Camera2BasicFragment extends Fragment
         // a camera and start preview from here (otherwise, we wait until the surface is ready in
         // the SurfaceTextureListener).
         if (mTextureView.isAvailable()) {
-            openCamera(mTextureView.getWidth(), mTextureView.getHeight());
+            openCamera(mTextureView.getWidth(), mTextureView.getHeight(),isFacing);
         } else {
             mTextureView.setSurfaceTextureListener(mSurfaceTextureListener);
         }
@@ -727,7 +727,7 @@ public class Camera2BasicFragment extends Fragment
      * @param height The height of available size for camera preview
      */
     @SuppressWarnings("SuspiciousNameCombination")
-    private void setUpCameraOutputs(int width, int height) {
+    private void setUpCameraOutputs(int width, int height, boolean isFacing) {
         Activity activity = getActivity();
         CameraManager manager = (CameraManager) activity.getSystemService(Context.CAMERA_SERVICE);
         try {
@@ -740,7 +740,11 @@ public class Camera2BasicFragment extends Fragment
 //                if (facing != null && facing == CameraCharacteristics.LENS_FACING_FRONT) {
 //                    continue;
 //                }
-                if (facing != null && facing == CameraCharacteristics.LENS_FACING_BACK) {
+                int front_back = CameraCharacteristics.LENS_FACING_BACK;
+                if (!isFacing) {
+                    front_back = CameraCharacteristics.LENS_FACING_FRONT;
+                }
+                if (facing != null && facing == front_back) {
                     continue;
                 }
 
@@ -842,13 +846,13 @@ public class Camera2BasicFragment extends Fragment
      * Opens the camera specified by {@link Camera2BasicFragment#mCameraId}.
      */
     @RequiresPermission(android.Manifest.permission.CAMERA)
-    private void openCamera(int width, int height) {
+    private void openCamera(int width, int height, boolean isFacing) {
         if (ContextCompat.checkSelfPermission(getActivity(), Manifest.permission.CAMERA)
                 != PackageManager.PERMISSION_GRANTED) {
             requestCameraPermission();
             return;
         }
-        setUpCameraOutputs(width, height);
+        setUpCameraOutputs(width, height,isFacing);
         configureTransform(width, height);
         Activity activity = getActivity();
         CameraManager manager = (CameraManager) activity.getSystemService(Context.CAMERA_SERVICE);
@@ -1132,8 +1136,11 @@ public class Camera2BasicFragment extends Fragment
     @Override
     public void onClick(View view) {
         switch (view.getId()) {
-            case R.id.picture: {
-                takePicture();
+            case R.id.rotate: {
+//                takePicture();
+                isFacing = !isFacing;
+                closeCamera();
+                openCamera(mTextureView.getWidth(), mTextureView.getHeight(),isFacing);
                 break;
             }
             case R.id.info: {
