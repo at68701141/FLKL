@@ -1,5 +1,5 @@
 # FLKL
-This is a Android face recognition repository.This repository is to commemorate LKL.
+This is a Android face recognition repository.This repository is to find LKL.
 
 This project is based on android-Camera2Basic.It can recognize faces captured by cameras and box them out.
 
