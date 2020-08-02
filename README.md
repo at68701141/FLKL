@@ -3,8 +3,8 @@ This is a Android face recognition repository.This repository is to find LKL.
 
 This project is based on android-Camera2Basic.It can recognize faces captured by cameras and box them out.
 
-<img src="screenshot/Screenshot_20200730_210922.jpg" height="256"/>
-<img src="screenshot/Screenshot_20200730_211634.jpg" height="256"/>
+<img src="screenshot/Screenshot_20200802_214043.jpg" height="256"/>
+<img src="screenshot/Screenshot_20200802_214736.jpg" height="256"/>
 
 Face recognition steps:
 - 1.Face Detection
