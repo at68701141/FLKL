@@ -27,11 +27,8 @@ vector<vector<float>> generate_anchors(const vector<float>& ratios, const vector
 				for (int k = 0; k < 8; k++) {
 					center_tiled.push_back(cxys[j]);
 					center_tiled.push_back(x);
-					//printf("%f %f ", cxys[j], x);
 				}
-				//printf("\n");
 			}
-			//printf("\n");
 		}
 
 		vector<float> anchor_width_heights;
@@ -41,7 +38,6 @@ vector<vector<float>> generate_anchors(const vector<float>& ratios, const vector
 			anchor_width_heights.push_back(-scale / 2.0);
 			anchor_width_heights.push_back(scale / 2.0);
 			anchor_width_heights.push_back(scale / 2.0);
-			//printf("%f %f %f %f\n", -scale / 2.0, -scale / 2.0, scale / 2.0, scale / 2.0);
 		}
 
 		for (int i = 0; i < anchor_base.size(); i++) {
@@ -53,19 +49,14 @@ vector<vector<float>> generate_anchors(const vector<float>& ratios, const vector
 			anchor_width_heights.push_back(-h / 2.0);
 			anchor_width_heights.push_back(w / 2.0);
 			anchor_width_heights.push_back(h / 2.0);
-			//printf("s1:%f, ratio:%f w:%f h:%f\n", s1, ratio, w, h);
-			//printf("%f %f %f %f\n", -w / 2.0, -h / 2.0, w / 2.0, h / 2.0);
 		}
 
 		int index = 0;
-		//printf("\n");
 		for (float& a : center_tiled) {
 			float c = a + anchor_width_heights[(index++) % anchor_width_heights.size()];
 			bbox_coords.push_back(c);
-			//printf("%f ", c);
 		}
 
-		//printf("bbox_coords.size():%d\n", bbox_coords.size());
 		int anchors_size = bbox_coords.size() / 4;
 		for (int i = 0; i < anchors_size; i++) {
 			vector<float> f;
@@ -221,7 +212,6 @@ vector<int> single_class_non_max_suppression(vector<cv::Rect2f> & rects, float* 
 #include "MNNDefine.h"
 #include "Tensor.hpp"
 #include "ImageProcess.hpp"
-//#include <opencv2/opencv.hpp>
 #include <algorithm>
 #include <iostream>
 #include <string>
@@ -242,8 +232,6 @@ typedef struct _FaceInfo {
 } _FaceInfo;
 
 #define clip(x, y) (x < 0 ? 0 : (x > y ? y : x))
-
-//using namespace std;
 
 class UltraFace {
 public:
@@ -331,19 +319,7 @@ public:
 		ultraface_interpreter->runSession(ultraface_session);
 
 		// get output data
-
-		/*string scores = "scores";
-		string boxes = "boxes";*/
-		//string scores = "scores";
-		//string boxes = "bboxes";
-  //      MNN::Tensor *tensor_scores = ultraface_interpreter->getSessionOutput(ultraface_session, scores.c_str());
-  //      MNN::Tensor *tensor_boxes = ultraface_interpreter->getSessionOutput(ultraface_session, boxes.c_str());
 		auto tensor = ultraface_interpreter->getSessionOutputAll(ultraface_session);
-		printf("tensor.size():%u\n", tensor.size());
-		for (auto itr = tensor.begin(); itr != tensor.end(); ++itr) {
-			cout << '\t' << itr->first
-				<< '\t' << itr->second << '\n';
-		}
 		MNN::Tensor* tensor_scores = tensor["cls_branch_concat_1/concat"];
 		MNN::Tensor* tensor_boxes = tensor["loc_branch_concat_1/concat"];
 
@@ -361,9 +337,6 @@ public:
 		auto end = chrono::steady_clock::now();
 		chrono::duration<double> elapsed = end - start;
 		cout << "inference time:" << elapsed.count() << " s" << endl;
-
-		//generateBBox(bbox_collection, tensor_scores, tensor_boxes);
-		//nms(bbox_collection, face_list);
 
 		vector<float> ratios{1.0,0.62,0.42};
 		vector<int> scales{33,17,9,5,3};

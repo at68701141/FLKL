@@ -51,7 +51,6 @@ public:
 		ultraface_interpreter = std::shared_ptr<MNN::Interpreter>(MNN::Interpreter::createFromBuffer(mnn_model_buf,buf_len));
 		MNN::ScheduleConfig config;
 		config.numThread = num_thread;
-//        config.type = MNN_FORWARD_VULKAN;
 		config.type = MNN_FORWARD_CPU;
 		MNN::BackendConfig backendConfig;
 		backendConfig.precision = MNN::BackendConfig::PrecisionMode::Precision_Low;
@@ -83,25 +82,13 @@ public:
 
 		auto end = std::chrono::steady_clock::now();
 		std::chrono::duration<double> elapsed = end - start;
-		std::cout << "inference time:" << elapsed.count() << " s" << std::endl;
+		LOGD("inference time:%f ms",elapsed.count()*1000);
 
 		// get output data
-		//MNN::Tensor* tensor_scores = tensor["cls_branch_concat"];
-		//MNN::Tensor* tensor_boxes = tensor["loc_branch_concat"];
 		for (auto itr = tensor.begin(); itr != tensor.end(); ++itr) {
-			//std::cout << '\t' << itr->first
-			//	<< '\t' << itr->second << '\n';
-			//if (!itr->first || !itr->second) {
-			//	return 1;
-			//}
 			lang::FloatStream fs{ itr->second->host<float>(),itr->second->elementSize() };
 			output.emplace(std::make_pair(itr->first, fs));
 		}
-		//if (!tensor_scores || !tensor_boxes) {
-		//	return 1;
-		//}
-		/*cls = { tensor_scores->host<float>(), tensor_scores->elementSize()};
-		loc = { tensor_boxes->host<float>(), tensor_boxes->elementSize()};*/
 		return 0;
 	}
 	virtual int forward(const cv::Mat& raw_image, std::map<std::string, std::vector<float>>& output) {
@@ -122,17 +109,10 @@ public:
 
 		auto end = std::chrono::steady_clock::now();
 		std::chrono::duration<double> elapsed = end - start;
-		std::cout << "inference time:" << elapsed.count() << " s" << std::endl;
+		LOGD("inference time:%f ms",elapsed.count()*1000);
 
 		// get output data
-		//MNN::Tensor* tensor_scores = tensor["cls_branch_concat"];
-		//MNN::Tensor* tensor_boxes = tensor["loc_branch_concat"];
 		for (auto itr = tensor.begin(); itr != tensor.end(); ++itr) {
-			//std::cout << '\t' << itr->first
-			//	<< '\t' << itr->second << '\n';
-			//if (!itr->first || !itr->second) {
-			//	return 1;
-			//}
 			auto nchwTensor = new MNN::Tensor(itr->second, MNN::Tensor::CAFFE);
 			itr->second->copyToHostTensor(nchwTensor);
 			std::vector<float> vec(nchwTensor->elementSize());
@@ -140,11 +120,6 @@ public:
 			delete nchwTensor;
 			output.emplace(std::make_pair(itr->first, std::move(vec)));
 		}
-		//if (!tensor_scores || !tensor_boxes) {
-		//	return 1;
-		//}
-		/*cls = { tensor_scores->host<float>(), tensor_scores->elementSize()};
-		loc = { tensor_boxes->host<float>(), tensor_boxes->elementSize()};*/
 		return 0;
 	}
 };

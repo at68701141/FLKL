@@ -31,12 +31,9 @@ public:
 	}
 
 	int FindFaceLocations(cv::Mat& raw_image, std::vector<FaceInfo>& face_list) {
-//		std::map<std::string, lang::FloatStream> m{};
-//		model.forward(raw_image, m);
-//		lang::FloatStream &cls = m["cls_branch_concat"];
-//		lang::FloatStream &loc = m["loc_branch_concat"];
 		std::map<std::string, std::vector<float>> m{};
 		model.forward(raw_image, m);
+#if 0
 //		__android_log_print(ANDROID_LOG_DEBUG, "LOG_TAG","cls_branch_concat:");
 //		char *buf = new char[310000];
 //		int num = 0;
@@ -57,6 +54,7 @@ public:
 //		__android_log_write(ANDROID_LOG_DEBUG, "LOG_TAG",buf);
 //		__android_log_print(ANDROID_LOG_DEBUG, "LOG_TAG","\n");
 //		delete[] buf;
+#endif
 		lang::FloatStream cls = {m["cls_branch_concat"].data(),(int)m["cls_branch_concat"].size()};
 		lang::FloatStream loc = {m["loc_branch_concat"].data(),(int)m["loc_branch_concat"].size()};
 
@@ -103,11 +101,8 @@ private:
 					for (int k = 0; k < 8; k++) {
 						center_tiled.push_back(cxys[j]);
 						center_tiled.push_back(x);
-						//printf("%f %f ", cxys[j], x);
 					}
-					//printf("\n");
 				}
-				//printf("\n");
 			}
 
 			std::vector<float> anchor_width_heights;
@@ -117,7 +112,6 @@ private:
 				anchor_width_heights.push_back(-scale / 2.0f);
 				anchor_width_heights.push_back(scale / 2.0f);
 				anchor_width_heights.push_back(scale / 2.0f);
-				//printf("%f %f %f %f\n", -scale / 2.0, -scale / 2.0, scale / 2.0, scale / 2.0);
 			}
 
 			for (int i = 0; i < anchor_base.size(); i++) {
@@ -129,19 +123,14 @@ private:
 				anchor_width_heights.push_back(-h / 2.0f);
 				anchor_width_heights.push_back(w / 2.0f);
 				anchor_width_heights.push_back(h / 2.0f);
-				//printf("s1:%f, ratio:%f w:%f h:%f\n", s1, ratio, w, h);
-				//printf("%f %f %f %f\n", -w / 2.0, -h / 2.0, w / 2.0, h / 2.0);
 			}
 
 			int index = 0;
-			//printf("\n");
 			for (float& a : center_tiled) {
 				float c = a + anchor_width_heights[(index++) % anchor_width_heights.size()];
 				bbox_coords.push_back(c);
-				//printf("%f ", c);
 			}
 
-			//printf("bbox_coords.size():%d\n", bbox_coords.size());
 			int anchors_size = (int)bbox_coords.size() / 4;
 			for (int i = 0; i < anchors_size; i++) {
 				std::vector<float> f;
@@ -175,10 +164,6 @@ private:
             ++i;
 			float r3 = raw[i] * v[i % 4];
             ++i;
-			//float r0 = raw[i] * v[i++ % 4];
-			//float r1 = raw[i] * v[i++ % 4];
-			//float r2 = raw[i] * v[i++ % 4];
-			//float r3 = raw[i] * v[i++ % 4];
 
 			float centet_x = r0 * cw + acx;
 			float centet_y = r1 * ch + acy;
@@ -232,7 +217,6 @@ private:
 			select_idx++;
 #pragma omp parallel for num_threads(8)
 			for (int32_t i = select_idx; i < num_bbox; i++) {
-				//for (int32_t i = 0; i < num_bbox-select_idx; i++) {
 				if (mask_merged[i] == 1)
 					continue;
 

@@ -352,25 +352,15 @@ public class Camera2BasicFragment extends Fragment
             // Get the bitmap
             Bitmap frame = Bitmap.createBitmap(mPreviewSize.getWidth(), mPreviewSize.getHeight(), Bitmap.Config.ARGB_8888);
             mTextureView.getBitmap(frame);
-//            Bitmap _frame = frame.copy(Bitmap.Config.ARGB_8888, true);
-//            _frame = RotateImage(_frame,mSensorOrientation);
-//            frame = RotateImage(frame,90);
-//            Mat mat = new Mat(mPreviewSize.getHeight(),mPreviewSize.getWidth(), CvType.CV_8UC3);
+
             Mat mat = new Mat();
             Utils.bitmapToMat(frame, mat);
-//            Imgproc.cvtColor(mat, mat, Imgproc.COLOR_RGB2BGR);
-//            OpenImage2Mat("xk12.jpg",mat);
 
             long start = System.currentTimeMillis();
             FaceInfo[] faceInfos = faceClf.clf(mat.getNativeObjAddr());
             Log.d(TAG,String.format("clf used %d ms", System.currentTimeMillis()-start));
 
-            // Do whatever you like with the frame
-//            frameProcessor?.processFrame(frame)
-            // End changes
-
             SurfaceHolder holder = mSurfaceView.getHolder();
-//            holder.setFormat(PixelFormat.TRANSPARENT);
             Canvas canvas = holder.lockCanvas();
             if (canvas == null) {
                 Log.e(TAG, "Cannot draw onto the canvas as it's null");
@@ -387,7 +377,6 @@ public class Camera2BasicFragment extends Fragment
                         canvas.drawRect(faceinfo.rect.x*width_per, faceinfo.rect.y*height_per, (faceinfo.rect.x + faceinfo.rect.width)*width_per, (faceinfo.rect.y + faceinfo.rect.height)*height_per, myPaint);
                         Paint textPaint = new Paint();
                         textPaint.setColor(Color.rgb(200, 20, 50));
-//                        textPaint.setStrokeWidth(mTextureView.getHeight()*0.3f);
                         textPaint.setTextSize(mTextureView.getHeight()*0.1f);
                         textPaint.setStyle(Paint.Style.FILL);
                         canvas.drawText(faceinfo.clf,faceinfo.rect.x*width_per,faceinfo.rect.y*height_per,textPaint);
@@ -686,48 +675,6 @@ public class Camera2BasicFragment extends Fragment
         mSurfaceView.setZOrderOnTop(true);
         SurfaceHolder mHolder = mSurfaceView.getHolder();
         mHolder.setFormat(PixelFormat.TRANSPARENT);
-//        mHolder.addCallback(new SurfaceHolder.Callback() {
-//            @Override
-//            public void surfaceCreated(SurfaceHolder holder) {
-////                Canvas canvas = holder.lockCanvas();
-////                if (canvas == null) {
-////                    Log.e(TAG, "Cannot draw onto the canvas as it's null");
-////                } else {
-////                    Paint myPaint = new Paint();
-////                    myPaint.setColor(Color.rgb(100, 20, 50));
-////                    myPaint.setStrokeWidth(10);
-////                    myPaint.setStyle(Paint.Style.STROKE);
-////                    canvas.drawRect(100, 100, 200, 200, myPaint);
-////
-////                    holder.unlockCanvasAndPost(canvas);
-////                }
-//            }
-//
-//            @Override
-//            public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
-//                Canvas canvas = holder.lockCanvas();
-//                if (canvas == null) {
-//                    Log.e(TAG, "Cannot draw onto the canvas as it's null");
-//                } else {
-//                    Paint myPaint = new Paint();
-//                    myPaint.setColor(Color.rgb(100, 20, 50));
-//                    myPaint.setStrokeWidth(10);
-//                    myPaint.setStyle(Paint.Style.STROKE);
-//                    if (faceInfos != null && faceInfos.length > 0) {
-//                        for (FaceInfo faceinfo : faceInfos) {
-//                            canvas.drawRect(faceinfo.rect.x, faceinfo.rect.y, faceinfo.rect.x + faceinfo.rect.width, faceinfo.rect.y + faceinfo.rect.height, myPaint);
-//                        }
-//                    }
-//
-//                    holder.unlockCanvasAndPost(canvas);
-//                }
-//            }
-//
-//            @Override
-//            public void surfaceDestroyed(SurfaceHolder holder) {
-//
-//            }
-//        });
     }
 
     @Override
@@ -805,9 +752,6 @@ public class Camera2BasicFragment extends Fragment
 
                 // We don't use a front facing camera in this sample.
                 Integer facing = characteristics.get(CameraCharacteristics.LENS_FACING);
-//                if (facing != null && facing == CameraCharacteristics.LENS_FACING_FRONT) {
-//                    continue;
-//                }
                 int front_back = CameraCharacteristics.LENS_FACING_BACK;
                 if (!isFacing) {
                     front_back = CameraCharacteristics.LENS_FACING_FRONT;

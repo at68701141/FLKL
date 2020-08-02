@@ -27,16 +27,13 @@ public:
 	~FaceRecognition() {};
 
 	std::vector<float> encode(const cv::Mat& raw_image, const FaceDetect::FaceInfo& face_info) {
-//		lang::FloatStream landmark{};
 		std::vector<float> landmark;
 		_landmark_model.GetLandmark(raw_image({ MAX(0,MIN((int)face_info.y1,raw_image.rows)),MAX(0,MIN((int)face_info.y2,raw_image.rows)) }, { MAX(0,MIN((int)face_info.x1,raw_image.cols)),MAX(0,MIN((int)face_info.x2,raw_image.cols)) }), landmark);
 		cv::Mat face_chip;
 		DlibGetFaceChip(raw_image, face_info, {landmark.data(),(int)landmark.size()}, face_chip);
 
-//		lang::FloatStream fs{};
 		std::vector<float> fs;
 		_feature_model.GetFeature(face_chip, fs);
-//		return { fs.ptr, fs.ptr + fs.len };
 		return fs;
 	}
 
@@ -87,8 +84,6 @@ public:
 
 	static double calculSimilar(const std::vector<float>& v1, const std::vector<float>& v2, int distance_metric = 0)
 	{
-		//if (v1.size() != v2.size() || !v1.size())
-		//	return 0;
 		assert(v1.size() == v2.size() && v1.size());
 		double ret = 0.0, mod1 = 0.0, mod2 = 0.0, dist = 0.0, diff = 0.0;
 

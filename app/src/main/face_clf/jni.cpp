@@ -12,22 +12,13 @@
 #include <android/log.h>
 #include <chrono>
 
-//JNIEXPORT jint JNICALL Java_com_example_flkl
-//        (JNIEnv *, jobject, jint, jint);
-
 lang::Placement<MNNModel> mnn_model;
-//FaceDetect face_detect{ mnn_model,0.65f,0.4f};
 lang::Placement<FaceDetect> face_detect;
 
-//MNNModel mnn_feature_model{ "H:/MyData/AI/face_recognize/ultra_mobile_face_clf/mnn/feature_model/tf_mobilefacenet.mnn",
-//          112, 112, 4, {127.5f, 127.5f, 127.5f}, {1/127.5f, 1/127.5f, 1/127.5f} };
 lang::Placement<MNNModel> mnn_feature_model;
 
-//MNNModel mnn_landmark_model{ "H:/MyData/AI/face_recognize/ultra_mobile_face_clf/mnn/landmark_model/torch_landmark.mnn",
-//                             56, 56, 4,{ 127.5f, 127.5f, 127.5f },{ 1/127.5f, 1 / 127.5f, 1 / 127.5f } };
 lang::Placement<MNNModel> mnn_landmark_model;
 
-//FaceRecognition faec_clf(mnn_landmark_model, mnn_feature_model);
 lang::Placement<FaceRecognition> faec_clf;
 
 std::map<std::string,std::vector<float>> recog_faces;
@@ -40,7 +31,6 @@ static int LoadMNNModel(lang::Placement<MNNModel>& model,AAssetManager* mgr, con
     char* buffer = (char*) malloc (sizeof(char)*size);
     AAsset_read (asset,buffer,size);
     AAsset_close(asset);
-//    model = MNNModel{buffer,(int)size,input_width, input_length, num_thread_,mean_vals_,norm_vals_};
     model.Initialize(buffer,(int)size,input_width, input_length, num_thread_,mean_vals_,norm_vals_);
     free(buffer);
     return 0;
@@ -50,8 +40,6 @@ extern "C" {
 JNIEXPORT jobjectArray
 JNICALL
 Java_com_example_flkl_FaceClf_clf(JNIEnv *env, jobject thiz, jlong raw_image_addr) {
-    // TODO: implement clf()
-
     std::chrono::steady_clock::time_point start = std::chrono::steady_clock::now();
 
     std::vector<FaceDetect::FaceInfo> face_info;
@@ -59,14 +47,7 @@ Java_com_example_flkl_FaceClf_clf(JNIEnv *env, jobject thiz, jlong raw_image_add
     cv::Mat c3u8_image(raw_image.rows,raw_image.cols,CV_8UC3);
     raw_image.convertTo(c3u8_image, CV_8UC3);
     cv::cvtColor(c3u8_image,c3u8_image,cv::COLOR_BGR2RGB);
-//    for (int i = 0; i < c3u8_image.rows; ++i) {
-//        auto *ptr = c3u8_image.data;
-//        for (int j = 0; j < c3u8_image.cols; ++j) {
-//            ptr[i*c3u8_image.cols+j*3+0] = 1;
-//            ptr[i*c3u8_image.cols+j*3+1] = 1;
-//            ptr[i*c3u8_image.cols+j*3+2] = 1;
-//        }
-//    }
+
     std::chrono::duration<double> time_span = std::chrono::duration_cast<std::chrono::duration<double>>(std::chrono::steady_clock::now() - start);
     LOGD("image deal used %f ms\n",time_span.count() * 1000);
     start = std::chrono::steady_clock::now();
@@ -94,9 +75,7 @@ Java_com_example_flkl_FaceClf_clf(JNIEnv *env, jobject thiz, jlong raw_image_add
             auto face_dist = faec_clf->calculSimilar(feature.second, facechipmobilefeature);
             time_span = std::chrono::duration_cast<std::chrono::duration<double>>(std::chrono::steady_clock::now() - start);
             LOGD("calculSimilar used %f ms\n",time_span.count() * 1000);
-            printf("face_dist:%f\n", face_dist);
             if (face_dist < 1.0) {
-//                face_rects.emplace(feature.first,{face.x1,face.y1,face.x2,face.y2});
                 face_rects.insert(std::pair<std::string,rect>(feature.first,{(uint32_t)(face.x1+0.5),(uint32_t)(face.y1+0.5),(uint32_t)(face.x2+0.5),(uint32_t)(face.y2+0.5)}));
                 is_find = true;
                 break;
@@ -110,12 +89,6 @@ Java_com_example_flkl_FaceClf_clf(JNIEnv *env, jobject thiz, jlong raw_image_add
 
     const auto size = face_rects.size();
     jclass face_info_cls = env->FindClass( "com/example/flkl/FaceInfo");
-//    jclass rect_cls = env->FindClass( "org/opencv/core/Rect");
-////    result = (*env)->NewObject(env, intArrCls,NULL);
-////    jmethodID cnstrctr = (*env)->GetMethodID(env, cls, "<init>", "(Ljava/lang/String;[B)V");
-//    jmethodID rect_construct = env->GetMethodID(rect_cls, "<init>", "(IIII)V");
-//    jmethodID faceinfo_construct = env->GetMethodID(face_info_cls, "<init>",
-//                                                    "(Ljava/lang/String;Lorg/opencv/core/Rect;)V");
     jobjectArray result = env->NewObjectArray( size, face_info_cls,
                                     NULL);
 
@@ -136,7 +109,6 @@ Java_com_example_flkl_FaceClf_clf(JNIEnv *env, jobject thiz, jlong raw_image_add
         auto str_tmp = env->NewStringUTF(face_rect.first.c_str());
         auto faceinfo_tmp = env->NewObject(face_info_cls, faceinfo_construct, str_tmp, rect_tmp);
         env->SetObjectArrayElement( result, i++, faceinfo_tmp);
-//        (*env)->DeleteLocalRef(env, iarr);
     }
 
     return result;
@@ -144,10 +116,6 @@ Java_com_example_flkl_FaceClf_clf(JNIEnv *env, jobject thiz, jlong raw_image_add
 
 JNIEXPORT jboolean JNICALL
 Java_com_example_flkl_FaceClf_Init(JNIEnv *env, jobject thiz, jobject assetManager) {
-    // TODO: implement Init()
-//    mnn_model.Initialize();
-//    mnn_feature_model.Initialize();
-//    mnn_landmark_model.Initialize();
     AAssetManager* mgr = AAssetManager_fromJava(env, assetManager);
     LoadMNNModel(mnn_model,mgr,"torch_model360.mnn",360,360,4);
     LoadMNNModel(mnn_feature_model,mgr,"tf_mobilefacenet.mnn", 112, 112, 4, {127.5f, 127.5f, 127.5f}, {1/127.5f, 1/127.5f, 1/127.5f});
@@ -159,7 +127,6 @@ Java_com_example_flkl_FaceClf_Init(JNIEnv *env, jobject thiz, jobject assetManag
 
 JNIEXPORT jboolean JNICALL
 Java_com_example_flkl_FaceClf_AddFace(JNIEnv *env, jobject thiz, jstring name,jlong raw_image_addr) {
-    // TODO: implement AddFace()
     const char *_name = env->GetStringUTFChars( name, NULL);
     if (NULL == _name) {
         return {0};
