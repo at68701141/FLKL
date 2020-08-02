@@ -314,16 +314,16 @@ public class Camera2BasicFragment extends Fragment
                 myPaint.setStrokeWidth(5);
                 myPaint.setStyle(Paint.Style.STROKE);
                 if (faceInfos != null && faceInfos.length > 0) {
-                    final float width_per =  1.0f * mTextureView.getWidth() / mPreviewSize.getHeight();
-                    final float height_per =  1.0f * mTextureView.getHeight() / mPreviewSize.getWidth();
+                    final float width_per =  1.0f * mTextureView.getWidth() / mPreviewSize.getWidth();
+                    final float height_per =  1.0f * mTextureView.getHeight() / mPreviewSize.getHeight();
                     for (FaceInfo faceinfo : faceInfos) {
-                        canvas.drawRect(faceinfo.rect.y*width_per, faceinfo.rect.x*height_per, (faceinfo.rect.y + faceinfo.rect.height)*width_per, (faceinfo.rect.x + faceinfo.rect.width)*height_per, myPaint);
+                        canvas.drawRect(faceinfo.rect.x*width_per, faceinfo.rect.y*height_per, (faceinfo.rect.x + faceinfo.rect.width)*width_per, (faceinfo.rect.y + faceinfo.rect.height)*height_per, myPaint);
                         Paint textPaint = new Paint();
                         textPaint.setColor(Color.rgb(200, 20, 50));
 //                        textPaint.setStrokeWidth(mTextureView.getHeight()*0.3f);
                         textPaint.setTextSize(mTextureView.getHeight()*0.1f);
                         textPaint.setStyle(Paint.Style.FILL);
-                        canvas.drawText(faceinfo.clf,faceinfo.rect.y*width_per,faceinfo.rect.x*height_per,textPaint);
+                        canvas.drawText(faceinfo.clf,faceinfo.rect.x*width_per,faceinfo.rect.y*height_per,textPaint);
                     }
                 }
 
