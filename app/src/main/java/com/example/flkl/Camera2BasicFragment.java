@@ -25,8 +25,10 @@ import android.app.DialogFragment;
 import androidx.fragment.app.Fragment;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
+import android.database.Cursor;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -52,6 +54,7 @@ import android.hardware.camera2.params.StreamConfigurationMap;
 import android.media.Image;
 import android.media.ImageReader;
 import android.media.ExifInterface;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
@@ -63,6 +66,8 @@ import androidx.core.app.ActivityCompat;
 //import android.support.v4.app.Fragment;
 //import android.support.v4.content.ContextCompat;
 import androidx.core.content.ContextCompat;
+
+import android.provider.MediaStore;
 import android.util.Log;
 import android.util.Size;
 import android.util.SparseIntArray;
@@ -75,10 +80,15 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Toast;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -194,11 +204,67 @@ public class Camera2BasicFragment extends Fragment
 
         return true;
     }
-    private void OpenImage2Mat(String path,Mat out) {
+    private boolean SearchAppFiles() {
+        File[] files = new File(getActivity().getExternalFilesDir(null).getPath()).listFiles();
+        for (int i = 0; i < files.length; i++)
+        {
+            for (File file : files) {
+                String[] fname = file.getName().split(("/"));
+                Mat _mat = new Mat();
+                try {
+                    OpenAppImage2Mat(getActivity().getExternalFilesDir(null).getPath()+'/'+file.getName(),_mat);
+                } catch (FileNotFoundException e) {
+                    e.printStackTrace();
+                }
+                faceClf.AddFace(fname[fname.length-1], _mat.getNativeObjAddr());
+            }
+        }
+        return true;
+    }
+    private void OpenAssetsImage2Mat(String path, Mat out) {
         InputStream is=null;
         try {
             is = getActivity().getAssets().open(path);
         } catch (IOException e1) {  e1.printStackTrace();}
+        //Get the texture from the Android resource directory
+        //InputStream is = context.getResources().openRawResource(R.drawable.radiocd5);
+        Bitmap bitmap = null;
+        try {
+            //BitmapFactory is an Android graphics utility for images
+            bitmap = BitmapFactory.decodeStream(is);
+
+            //有些图片读出来宽高反了，需要旋转
+            try {
+                ExifInterface exif = new ExifInterface(is);
+                int orientation = exif.getAttributeInt(ExifInterface.TAG_ORIENTATION, 1);
+                Log.d("EXIF", "Exif: " + orientation);
+                Matrix matrix = new Matrix();
+                if (orientation == 6) {
+                    matrix.postRotate(90);
+                }
+                else if (orientation == 3) {
+                    matrix.postRotate(180);
+                }
+                else if (orientation == 8) {
+                    matrix.postRotate(270);
+                }
+                bitmap = Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, true); // rotating bitmap
+            }
+            catch (Exception e) {
+
+            }
+        } finally {
+            //Always clear and close
+            try {
+                is.close();
+                is = null;
+            } catch (IOException e) {
+            }
+        }
+        Utils.bitmapToMat(bitmap, out);
+    }
+    private void OpenAppImage2Mat(String path, Mat out) throws FileNotFoundException {
+        InputStream is =  new BufferedInputStream(new FileInputStream(path));
         //Get the texture from the Android resource directory
         //InputStream is = context.getResources().openRawResource(R.drawable.radiocd5);
         Bitmap bitmap = null;
@@ -243,12 +309,13 @@ public class Camera2BasicFragment extends Fragment
             String[] _split = file.split("\\.");
             if (_split.length >= 2 && _split[_split.length-1].equals("jpg")) {
                 Mat _mat = new Mat();
-                OpenImage2Mat(file, _mat);
+                OpenAssetsImage2Mat(file, _mat);
                 long start = System.currentTimeMillis();
                 faceClf.AddFace(_split[0], _mat.getNativeObjAddr());
                 Log.d(TAG, String.format("AddFace used %d ms", System.currentTimeMillis() - start));
             }
         }
+        SearchAppFiles();
     }
     private Bitmap RotateImage(Bitmap bitmap,int degress) {
         Matrix matrix = new Matrix();
@@ -610,6 +677,7 @@ public class Camera2BasicFragment extends Fragment
     @Override
     public void onViewCreated(final View view, Bundle savedInstanceState) {
         view.findViewById(R.id.rotate).setOnClickListener(this);
+        view.findViewById(R.id.plus).setOnClickListener(this);
         view.findViewById(R.id.info).setOnClickListener(this);
         mTextureView = (AutoFitTextureView) view.findViewById(R.id.texture);
 
@@ -1143,6 +1211,13 @@ public class Camera2BasicFragment extends Fragment
                 openCamera(mTextureView.getWidth(), mTextureView.getHeight(),isFacing);
                 break;
             }
+            case R.id.plus: {
+                Intent i = new Intent(Intent.ACTION_PICK,
+                        android.provider.MediaStore.Images.Media.INTERNAL_CONTENT_URI);
+                final int ACTIVITY_SELECT_IMAGE = 1234;
+                startActivityForResult(i, ACTIVITY_SELECT_IMAGE);
+                break;
+            }
             case R.id.info: {
                 Activity activity = getActivity();
                 if (null != activity) {
@@ -1155,6 +1230,42 @@ public class Camera2BasicFragment extends Fragment
             }
         }
     }
+
+    public void onActivityResult(int requestCode, int resultCode, Intent data)
+    {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        switch(requestCode) {
+            case 1234:
+                if(resultCode == Activity.RESULT_OK){
+                    Uri selectedImage = data.getData();
+
+                    String[] filePathColumn = {MediaStore.Images.Media.DATA};
+                    Cursor cursor = getActivity().getContentResolver().query(selectedImage, filePathColumn, null, null, null);
+                    cursor.moveToFirst();
+
+                    int columnIndex = cursor.getColumnIndex(filePathColumn[0]);
+                    String filestring = cursor.getString(columnIndex);
+                    cursor.close();
+
+                    Bitmap selectImage = BitmapFactory.decodeFile(filestring);
+
+                    String[] _split = filestring.split("/");
+                    File f = new File(getActivity().getExternalFilesDir(null), _split[_split.length-1]);
+
+                    OutputStream os = null;
+                    try {
+                        os = new BufferedOutputStream(new FileOutputStream(f));
+                        selectImage.compress(Bitmap.CompressFormat.JPEG, 100, os);
+                        os.close();
+                        InitFaceFactory();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+        }
+
+    };
 
     private void setAutoFlash(CaptureRequest.Builder requestBuilder) {
         if (mFlashSupported) {
