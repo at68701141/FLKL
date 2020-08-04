@@ -1,5 +1,5 @@
 # FLKL
-This is an Android face recognition library,which can recognize the faces captured by the camera and box them out.This repository is to find the lkl.
+This is an Android face recognition repository,which can recognize the faces captured by the camera and box them out.This repository is to find the lkl.
 
 This project is based on android-Camera2Basic.
 
