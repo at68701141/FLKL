@@ -10,7 +10,7 @@ Face recognition steps:
 - 1.Face Detection
 - 2.Face Alignment
 - 3.Get Face Feature
-- 4.Calculate similarity
+- 4.Calculate Similarity
 
 This repository refers to the following projects:
 - [MNN](https://github.com/alibaba/MNN)
